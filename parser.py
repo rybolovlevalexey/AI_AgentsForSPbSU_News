@@ -23,7 +23,7 @@ def regex_cleaning(text: str) -> str:
 
 
 BASE_URL = "https://spbu.ru/"
-file = open("parsed_data.txt", "w", encoding="UTF-8")
+file = open("university_data/parsed_data.txt", "w", encoding="UTF-8")
 for i in range(10):
     url = f"https://spbu.ru/news-events/novosti?page={i}"
     resp = requests.get(url, headers={"User-Agent": fake_useragent.UserAgent().random})

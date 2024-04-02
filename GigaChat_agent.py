@@ -5,36 +5,47 @@ from langchain_community.vectorstores import FAISS  # векторная баз�
 from langchain_openai import OpenAIEmbeddings  # для векторизации текста
 from langchain.tools.retriever import create_retriever_tool  # для создания ретривер-инструмента
 
+from typing import Any, Coroutine, List
+import datasets
+from langchain_core.documents import Document
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from pprint import pprint
 from dotenv import load_dotenv
 import os
-
+# from gigachain-community.embeddings import HuggingFaceEmbeddings
 load_dotenv()
 
 
-def main():  # в теории должно работать, если получится нормально запустить создание Embeddings
-    loader = TextLoader("parsed_data.txt", encoding="utf-8")
-    documents = loader.load()
+class HuggingFaceE5Embeddings(HuggingFaceEmbeddings):
+    def embed_query(self, text: str) -> List[float]:
+        text = f"query: {text}"
+        return super().embed_query(text)
 
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    documents = text_splitter.split_documents(documents)
-    print("here1")
-    vector = FAISS.from_documents(documents, OpenAIEmbeddings(
-        openai_api_key=os.getenv("Openai_api_key")))
-    # вот тут происходит ошибка (наверное, из-за api key
-    print("here2")
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        texts = [f"passage: {text}" for text in texts]
+        return super().embed_documents(texts)
 
-    retriever = vector.as_retriever()
-    result = retriever.similarity_search_with_score("новость про монгольский новый год")
-    print(result)
+    async def aembed_query(self, text: str) -> Coroutine[Any, Any, List[float]]:
+        text = f"query: {text}"
+        return await super().aembed_query(text)
 
-    retriever_tool = create_retriever_tool(
-        retriever,
-        "news_from_document_retriever",
-        "it will return news from a document based on the St. "
-        "Petersburg State University website",
-    )
+    async def aembed_documents(
+        self, texts: List[str]
+    ) -> Coroutine[Any, Any, List[List[float]]]:
+        texts = [f"passage: {text}" for text in texts]
+        return await super().aembed_documents(texts)
 
-    # создание агента
-    chat_model = GigaChat(credentials=os.getenv("GigaChat_credentials"),
-                          verify_ssl_certs=False, temperature=0)
+
+ds = datasets.load_dataset("university_data")
+print(type(ds))
+print(ds)
+documents = [
+    Document(page_content=context) for context in set(ds)
+]
+embedding = HuggingFaceE5Embeddings(model_name="intfloat/multilingual-e5-base")
+print("here1")
+faiss_db = FAISS.from_documents(documents, embedding=embedding)
+print("here2")
+embedding_retriever = faiss_db.as_retriever(search_kwargs={"k": 5})
+print("here3")
+print(embedding_retriever.get_relevant_documents("посол из Бразилии в СПбГУ"))
