@@ -20,7 +20,7 @@ def tg_func():
                 text_part += letter
 
         tg_lines.append(text_part + ";; \n")
-    with open("university_data/tg_parsing.txt", "w", encoding="utf-8") as file:
+    with open("../university_data/tg_parsing.txt", "w", encoding="utf-8") as file:
         file.writelines(tg_lines)
     return True
 

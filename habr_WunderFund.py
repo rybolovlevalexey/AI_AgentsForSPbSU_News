@@ -1,5 +1,5 @@
 import os
-
+from pprint import pprint
 import openai
 from dotenv import load_dotenv
 from langchain.document_loaders import DirectoryLoader, UnstructuredMarkdownLoader
@@ -11,6 +11,7 @@ def load_and_split_documents() -> list[dict]:
     Загружает наши документы с диска и разбивает их на фрагменты.
     Возвращает список словарей.
     """
+    DATA_DIR = r"C:\Users\rybol\PycharmProjects\AIAgentsForSPbSU_News\university_data"
     # Загрузка данных.
     loader = DirectoryLoader(
         DATA_DIR, loader_cls=UnstructuredMarkdownLoader, show_progress=True
@@ -34,3 +35,6 @@ def load_and_split_documents() -> list[dict]:
         final_docs.append(doc_dict)
 
     return final_docs
+
+
+pprint(load_and_split_documents())
