@@ -4,13 +4,15 @@ from llama_index.core.node_parser import SimpleNodeParser
 from langchain.vectorstores import Chroma
 from llama_index.core import GPTVectorStoreIndex
 from llama_index.core import VectorStoreIndex
+from llama_index.llms.llama_api import LlamaAPI
 import openai
 import dotenv
 
 
-# Не забываем указать ключ к апи
 dotenv.load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+llama = LlamaAPI(api_key=os.getenv("llama_api_token"))
+resp = llama.complete("Albert Einstein is ")
+print(resp)
 
 reader = SimpleDirectoryReader(input_dir='./university_data/')
 docs = reader.load_data()
