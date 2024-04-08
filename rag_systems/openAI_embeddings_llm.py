@@ -15,7 +15,9 @@ from langchain_core.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-
+# Скорее всего самый бесперспективный вариант. Т.к. нет доступа к OpenAI api key.
+# OpenAI Embeddings + ChatGPT не работает из-за отсутствия api key.
+# Возможно удастся решить эту проблему, в противном случае можно удалить.
 dotenv.load_dotenv()
 chat_gpt = ChatOpenAI()
 messages = [

@@ -16,6 +16,8 @@ from langchain_community.chat_models import GigaChat
 from langchain.schema import HumanMessage
 from pprint import pprint
 
+# Эталонный вариант. HuggingFaceEmbeddings + GigaChat.
+# Находит необходимые документы и корректно отвечает на вопросы
 dotenv.load_dotenv()
 llm = GigaChat(credentials=os.getenv("GigaChat_credentials"), verify_ssl_certs=False)
 
