@@ -46,7 +46,7 @@ def tg_parser(chanel_name: str = "spbuniversity1724", limit_count: int = 10) -> 
     if finish_id < 0:
         finish_id = 0
 
-    for iter_id in range(int(last_id), finish_id, -1):
+    for iter_id in range(int(last_id), 0, -1):
         try:
             post_soup = BeautifulSoup(dynamic_site_read(
                 f"https://t.me/{chanel_name}/{iter_id}"), "html.parser")
@@ -55,24 +55,30 @@ def tg_parser(chanel_name: str = "spbuniversity1724", limit_count: int = 10) -> 
         if post_soup.find("iframe") is None:
             print(f"https://t.me/{chanel_name}/{iter_id}")
             continue
-        post_soup_closer = BeautifulSoup(dynamic_site_read(
-            post_soup.find("iframe").get("src")), "html.parser")
+        src_url = post_soup.find("iframe").get("src")
+        post_soup_closer = BeautifulSoup(dynamic_site_read(src_url), "html.parser")
         if post_soup_closer.find(class_="tgme_widget_message_text js-message_text"):
             text_part = ""
             post_tag_text = post_soup_closer.find(
                 class_="tgme_widget_message_text js-message_text").get_text()
             post_tag_text = post_tag_text.replace("\n", " ")
             for letter in post_tag_text:
-                if letter.isalnum() or letter in " ,.:;/?!()[]{}-#@":
+                if letter.isalnum() or letter in " ,.:;/?!()[]{}-#@_":
                     text_part += letter
             if post_soup_closer.find("time") and post_soup_closer.find("time").get("datetime"):
                 post_date = post_soup_closer.find("time").get("datetime").split("T")[0]
             else:
                 post_date = None
-            posts_text.append({"text": text_part + ";; \n", "source": "tg",
-                               "parsing_date": str(date.today()),
-                               "post_date": post_date})
+            if (text_part + ";; \n") not in list(map(lambda elem: elem["text"], posts_text)):
+                posts_text.append({"text": text_part + ";; \n", "source": "tg",
+                                   "parsing_date": str(date.today()),
+                                   "post_date": post_date, "url": src_url})
+            if len(posts_text) >= limit_count:
+                break
     with open("../university_data/tg_parsing.txt", "w", encoding="utf-8") as file:
         file.writelines(list(map(lambda elem: elem["text"], posts_text)))
     return posts_text
 
+
+tg_parser(limit_count=30)
+print("tg done")

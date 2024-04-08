@@ -35,3 +35,7 @@ def vk_parser(chanel_name: str = "mmspbu", method_name: str = "wall.get",
     with open("../university_data/vk_parsing.txt", "w", encoding="utf-8") as file:
         file.writelines(list(map(lambda elem: elem["text"], text_lines)))
     return text_lines
+
+
+vk_parser(count=35)
+print("vk done")

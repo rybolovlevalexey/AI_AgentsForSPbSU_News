@@ -22,46 +22,57 @@ def regex_cleaning(text: str) -> str:
     return text
 
 
-BASE_URL = "https://spbu.ru/"
-file = open("../university_data/parsed_data.txt", "w", encoding="UTF-8")
-for i in range(10):
-    url = f"https://spbu.ru/news-events/novosti?page={i}"
-    resp = requests.get(url, headers={"User-Agent": fake_useragent.UserAgent().random})
-    if int(resp.status_code) != 200:
-        continue
-    soup = BeautifulSoup(resp.content, "html.parser")
-    if soup.find("div", class_="col-xs-12 col-md-9 col-lg-8 card-list--medium "
-                               "card-list--context card-list-clear-sm "
-                               "card-context--clear") is None:
-        continue
-    for link in soup.find("div", class_="col-xs-12 col-md-9 col-lg-8 card-list--medium "
-                                        "card-list--context card-list-clear-sm "
-                                        "card-context--clear").find_all(
-        "div", recursive=False):
-        new_resp = requests.get(BASE_URL + link.find("a").get("href"),
-                                headers={"User-Agent": fake_useragent.UserAgent().random})
-        new_soup = BeautifulSoup(new_resp.content, "html.parser")
-        res_text = new_soup.find("h1").text + ". "
-        if new_soup.find("div", class_="col-xs-12 col-md-9 col-lg-6"
-                                             " col-lg-offset-2 node node-news") is None:
+def news_website_parser(count: int = 20) -> bool:
+    BASE_URL = "https://spbu.ru/"
+    file = open("../university_data/news_web_site_parsing.txt", "w", encoding="UTF-8")
+    parsed_count: int = 0
+    for i in range(10):
+        url = f"https://spbu.ru/news-events/novosti?page={i}"
+        resp = requests.get(url, headers={"User-Agent": fake_useragent.UserAgent().random})
+        if int(resp.status_code) != 200:
             continue
-        for elem in new_soup.find("div", class_="col-xs-12 col-md-9 col-lg-6"
-                                                " col-lg-offset-2 node node-news").find_all(
-            ["p", "h2", "h3", "h4", "ul", "ol"]):
-            if len(elem.text) == 0:
+        soup = BeautifulSoup(resp.content, "html.parser")
+        if soup.find("div", class_="col-xs-12 col-md-9 col-lg-8 card-list--medium "
+                                   "card-list--context card-list-clear-sm "
+                                   "card-context--clear") is None:
+            continue
+        for link in soup.find("div", class_="col-xs-12 col-md-9 col-lg-8 card-list--medium "
+                                            "card-list--context card-list-clear-sm "
+                                            "card-context--clear").find_all(
+            "div", recursive=False):
+            new_resp = requests.get(BASE_URL + link.find("a").get("href"),
+                                    headers={"User-Agent": fake_useragent.UserAgent().random})
+            new_soup = BeautifulSoup(new_resp.content, "html.parser")
+            res_text = new_soup.find("h1").text + ". "
+            if new_soup.find("div", class_="col-xs-12 col-md-9 col-lg-6"
+                                                 " col-lg-offset-2 node node-news") is None:
                 continue
-            if elem.name in ["h2", "h3", "h4"]:
-                if elem.text[-1].isalnum():
-                    res_text += elem.text + ": "
-                else:
-                    res_text += elem.text + " "
-            elif elem.name == "p":
-                if elem.text[-1].isalnum():
-                    res_text += elem.text + ". "
-                else:
-                    res_text += elem.text + " "
-            elif elem.name in ["ul", "ol"]:
-                res_text += "; ".join([line.text for line in elem.find_all("li")]) + ". "
-        res_text = regex_cleaning(res_text) + ";; \n"
-        file.writelines([res_text])
-file.close()
+            for elem in new_soup.find("div", class_="col-xs-12 col-md-9 col-lg-6"
+                                                    " col-lg-offset-2 node node-news").find_all(
+                ["p", "h2", "h3", "h4", "ul", "ol"]):
+                if len(elem.text) == 0:
+                    continue
+                if elem.name in ["h2", "h3", "h4"]:
+                    if elem.text[-1].isalnum():
+                        res_text += elem.text + ": "
+                    else:
+                        res_text += elem.text + " "
+                elif elem.name == "p":
+                    if elem.text[-1].isalnum():
+                        res_text += elem.text + ". "
+                    else:
+                        res_text += elem.text + " "
+                elif elem.name in ["ul", "ol"]:
+                    res_text += "; ".join([line.text for line in elem.find_all("li")]) + ". "
+            res_text = regex_cleaning(res_text) + ";; \n"
+            file.writelines([res_text])
+            parsed_count += 1
+            if parsed_count >= count:
+                file.close()
+                return True
+    file.close()
+    return False
+
+
+if news_website_parser(count=35):
+    print("news site done")

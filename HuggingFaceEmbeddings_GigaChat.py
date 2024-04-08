@@ -5,7 +5,10 @@ import dotenv
 from chromadb.config import Settings
 from langchain.vectorstores import Chroma
 from langchain_community.embeddings.gigachat import GigaChatEmbeddings
-from langchain_community.embeddings.huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings.huggingface import (HuggingFaceEmbeddings,
+                                                        HuggingFaceBgeEmbeddings,
+                                                        HuggingFaceInstructEmbeddings,
+                                                        HuggingFaceInferenceAPIEmbeddings)
 from langchain_community.embeddings.bookend import BookendEmbeddings
 from langchain_community.embeddings.yandex import YandexGPTEmbeddings
 from langchain.chains import RetrievalQA
@@ -31,12 +34,12 @@ print(f"Total documents: {len(documents)}")
 embeddings = HuggingFaceEmbeddings()
 # folder_id = "b1go3kphb9455mmm06rb"
 # embeddings = YandexGPTEmbeddings(model_uri=f"gpt://{folder_id}/yandexgpt-lite/latest")
-print("start making db")
+print("start making database")
 db = Chroma.from_documents(
-    documents,
-    embeddings,
+    documents, embeddings,
     client_settings=Settings(anonymized_telemetry=False),
 )
+print("making database done")
 
 # question = "Семинар от кампании YADRO"
 # docs = db.similarity_search(question, k=3)
