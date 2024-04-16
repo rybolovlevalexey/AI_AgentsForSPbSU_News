@@ -52,18 +52,27 @@ def news_website_parser(count: int = 20) -> bool:
                 ["p", "h2", "h3", "h4", "ul", "ol"]):
                 if len(elem.text) == 0:
                     continue
+                text_part = ""
+                for letter in regex_cleaning(elem.text):
+                    if letter.isalnum() or letter in " ,.:;/?!()[]{}-#@_№—=«»":
+                        text_part += letter
                 if elem.name in ["h2", "h3", "h4"]:
                     if elem.text[-1].isalnum():
-                        res_text += elem.text + ": "
+                        res_text += text_part + ": "
                     else:
-                        res_text += elem.text + " "
+                        res_text += text_part + " "
                 elif elem.name == "p":
                     if elem.text[-1].isalnum():
-                        res_text += elem.text + ". "
+                        res_text += text_part + ". "
                     else:
-                        res_text += elem.text + " "
+                        res_text += text_part + " "
                 elif elem.name in ["ul", "ol"]:
-                    res_text += "; ".join([line.text for line in elem.find_all("li")]) + ". "
+                    if ("gallery" in elem.get("class", []) or
+                            "js-gallery" in elem.get("class", [])):
+                        continue
+                    res_text += "; ".join(["".join(list(filter(
+                        lambda let: let.isalnum() or let in " ,.:;/?!()[]{}-#@_№—=«»",
+                        list(line.text)))) for line in elem.find_all("li")]) + ". "
             res_text = regex_cleaning(res_text) + ";; \n"
             file.writelines([res_text])
             parsed_count += 1
@@ -74,5 +83,5 @@ def news_website_parser(count: int = 20) -> bool:
     return False
 
 
-if news_website_parser(count=35):
+if news_website_parser(count=50):
     print("news site done")

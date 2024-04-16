@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from pprint import pprint
 from datetime import datetime, date
-
+from typing import Union
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -34,9 +34,12 @@ def dynamic_site_read(url):
     return page_source
 
 
-def tg_parser(chanel_name: str = "spbuniversity1724", limit_count: int = 10) -> list[dict[str, str]]:
+def tg_parser(chanel_name: str = "spbuniversity1724", limit_count: int = 10,
+              file_name: Union[None, str] = None,
+              file_same_chanel: bool = False) -> list[dict[str, str]]:
     posts_text: list[dict[str, str]] = list()
     url: str = f"https://t.me/s/{chanel_name}"
+    posts_splitter: str = ";;\n"
     resp = requests.get(url)
     soup = BeautifulSoup(resp.content, "html.parser")
     # последний пост в канале на данный момент
@@ -60,25 +63,39 @@ def tg_parser(chanel_name: str = "spbuniversity1724", limit_count: int = 10) -> 
         if post_soup_closer.find(class_="tgme_widget_message_text js-message_text"):
             text_part = ""
             post_tag_text = post_soup_closer.find(
-                class_="tgme_widget_message_text js-message_text").get_text()
+                class_="tgme_widget_message_text js-message_text").get_text(separator=" ")
             post_tag_text = post_tag_text.replace("\n", " ")
             for letter in post_tag_text:
-                if letter.isalnum() or letter in " ,.:;/?!()[]{}-#@_":
+                if letter.isalnum() or letter in " ,.:;/?!()[]{}-#@_№—=«»":
                     text_part += letter
+            if " ." in text_part:
+                text_part = text_part.replace(" .", ".")
+            if "  " in text_part:
+                text_part = text_part.replace("  ", " ")
             if post_soup_closer.find("time") and post_soup_closer.find("time").get("datetime"):
                 post_date = post_soup_closer.find("time").get("datetime").split("T")[0]
             else:
                 post_date = None
-            if (text_part + ";; \n") not in list(map(lambda elem: elem["text"], posts_text)):
-                posts_text.append({"text": text_part + ";; \n", "source": "tg",
+            result_text_part: str = text_part.strip() + posts_splitter
+            if result_text_part not in list(map(lambda elem: elem["text"], posts_text)):
+                posts_text.append({"text": result_text_part, "source": "tg",
                                    "parsing_date": str(date.today()),
                                    "post_date": post_date, "url": src_url})
             if len(posts_text) >= limit_count:
                 break
-    with open("../university_data/tg_parsing.txt", "w", encoding="utf-8") as file:
+
+    if file_same_chanel:
+        posts_file_path = f"../university_data/{chanel_name}.txt"
+    else:
+        if file_name is None:
+            posts_file_path = "../university_data/tg_parsing.txt"
+        else:
+            posts_file_path = f"../university_data/{file_name}.txt"
+    with open(posts_file_path, "w", encoding="utf-8") as file:
         file.writelines(list(map(lambda elem: elem["text"], posts_text)))
+
     return posts_text
 
 
-tg_parser(limit_count=30)
+tg_parser(limit_count=50)
 print("tg done")
